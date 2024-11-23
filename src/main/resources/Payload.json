@@ -1,0 +1,33 @@
+{
+  "aboutMe": "I am a skilled Java Spring Boot developer with over 5 years of experience in building robust, scalable, and efficient backend systems.",
+  "name": "Myke Tyson",
+  "email": "abc.123@gmail.com",
+  "mobile": "9876543210",
+  "address": "123 Main Street, Anytown, USA",
+  "matricPassYear": "2011",
+  "internPassYear": "2013",
+  "graduationPassYear": "2016",
+  "hqPassYear": "2019",
+  "highestQualification": "MCA",
+  "aim": "My long-term aim is to continually evolve as a versatile and innovative software developer, leveraging my expertise in Java and Spring Boot to architect scalable, secure, and high-performing systems.",
+  "tableData": [
+    {
+      "slNo": "1",
+      "name": "John Doe",
+      "relationship": "Friend",
+      "mobile": "1234567890"
+    },
+    {
+      "slNo": "2",
+      "name": "Jane Smith",
+      "relationship": "Colleague",
+      "mobile": "9876543210"
+    },
+    {
+      "slNo": "3",
+      "name": "Mike Johnson",
+      "relationship": "Sibling",
+      "mobile": "5551234567"
+    }
+  ]
+}
