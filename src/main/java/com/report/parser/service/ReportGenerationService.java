@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,19 +61,6 @@ public class ReportGenerationService extends Mapper {
         }
         return null;
     }
-
-    /*public Resource parseToWord(Map<String, String> placeholderMap, Resource template) {
-        try {
-            WordprocessingMLPackage wordMLPackage = prepareWordMLPackage(placeholderMap, template);
-
-            // below line to modify the docx file
-            wordMLPackage.save(new java.io.FileOutputStream("quotation.docx"));
-            return new FileSystemResource("quotation.docx");
-        } catch (Exception e) {
-            log.info("Error occurred: {}", e.getMessage());
-        }
-        return null;
-    }*/
 
     private WordprocessingMLPackage prepareWordMLPackage(Map<String, Object> placeholderMap, Resource template) throws Exception {
         WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(template.getInputStream());
@@ -237,36 +223,6 @@ public class ReportGenerationService extends Mapper {
         }
         return 0;
     }
-
-    /*private WordprocessingMLPackage prepareWordMLPackage(Map<String, String> placeholderMap, Resource template) throws Exception {
-        WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(template.getInputStream());
-        MainDocumentPart documentPart = wordMLPackage.getMainDocumentPart();
-
-        // find the defined keys in docx file and verify with placeholderMap
-        Set<String> requestedKeys = new HashSet<>();
-        getKeysFromDocxFile(documentPart, requestedKeys);
-        verifyPlaceholderMap(requestedKeys, placeholderMap);
-
-        // Escape XML special characters in the placeholder values
-        Map<String, String> escapedPlaceholderMap = new HashMap<>();
-        for (Map.Entry<String, String> entry : placeholderMap.entrySet()) {
-            escapedPlaceholderMap.put(entry.getKey(), escapeXml(entry.getValue()));
-        }
-
-        VariablePrepare.prepare(wordMLPackage);
-        documentPart.variableReplace(escapedPlaceholderMap);
-        return wordMLPackage;
-    }*/
-
-    /*private void verifyPlaceholderMap(Set<String> requestedKeys, Map<String, String> placeholderMap) {
-        List<String> keysInPlaceHolderMap = placeholderMap.keySet().stream().map(key -> String.format("${%s}", key)).collect(Collectors.toList());
-        requestedKeys.forEach(key -> {
-            if (!keysInPlaceHolderMap.contains(key)) {
-                String actualKey = key.substring(key.indexOf("{") + 1, key.indexOf("}"));
-                placeholderMap.put(actualKey, "      ");
-            }
-        });
-    }*/
 
     private static void checkTextAlignment(WordprocessingMLPackage wordMLPackage) {
         Body body = wordMLPackage.getMainDocumentPart().getJaxbElement().getBody();
@@ -439,171 +395,5 @@ public class ReportGenerationService extends Mapper {
         }
 
         return row;
-    }
-
-    /*private void addTableToDocument(WordprocessingMLPackage wordMLPackage, List<Map<String, String>> records, LinkedHashMap<String, String> columnNames) {
-        MainDocumentPart documentPart = wordMLPackage.getMainDocumentPart();
-        Tbl table = createTable(records, columnNames);
-
-        // Find the placeholder and replace it with the table
-        List<Object> content = documentPart.getContent();
-        for (int i = 0; i < content.size(); i++) {
-            Object obj = content.get(i);
-            if (obj instanceof P) {
-                P p = (P) obj;
-                StringBuilder textContent = new StringBuilder();
-                List<Object> paragraphContent = p.getContent();
-                for (Object item : paragraphContent) {
-                    if (item instanceof R) {
-                        R run = (R) item;
-                        List<Object> runContent = run.getContent();
-                        for (Object runItem : runContent) {
-                            if (runItem instanceof JAXBElement) {
-                                JAXBElement<?> element = (JAXBElement<?>) runItem;
-                                if (element.getName().getLocalPart().equals("t")) {
-                                    textContent.append(((Text) element.getValue()).getValue());
-                                }
-                            }
-                        }
-                    }
-                }
-                if (textContent.toString().contains("@{tablePlaceholder}")) {
-                    // Remove the placeholder paragraph
-                    documentPart.getContent().remove(i);
-
-                    // Insert the table at this location
-                    documentPart.getContent().add(i, table);
-                    break;
-                }
-            }
-        }
-    }*/
-
-    /*private void addTableToDocument(WordprocessingMLPackage wordMLPackage, List<Map<String, String>> records, Map<String, String> columnNames) {
-        MainDocumentPart documentPart = wordMLPackage.getMainDocumentPart();
-        Tbl table = createTable(records, columnNames);
-        documentPart.addObject(table);
-    }*/
-
-    private Tbl createTable(List<Map<String, String>> records, LinkedHashMap<String, String> columnNames) {
-        ObjectFactory factory = new ObjectFactory();
-        Tbl table = factory.createTbl();
-
-        // Set table borders
-        TblPr tblPr = factory.createTblPr();
-
-        TblBorders borders = factory.createTblBorders();
-        CTBorder border = new CTBorder();
-        border.setVal(STBorder.SINGLE);
-        border.setSz(BigInteger.valueOf(4));
-        border.setColor("000000");
-
-        borders.setTop(border);
-        borders.setBottom(border);
-        borders.setLeft(border);
-        borders.setRight(border);
-        borders.setInsideH(border);
-        borders.setInsideV(border);
-
-        tblPr.setTblBorders(borders);
-        table.setTblPr(tblPr);
-
-        // Create table header row
-        Tr headerRow = factory.createTr();
-        Set<String> keys = columnNames.keySet();
-        for (String key : keys) {
-            Tc cell = factory.createTc();
-            setCellPropertiesAndValue(factory, columnNames.get(key), cell, headerRow);
-
-            // Set the cell background color
-            TcPr tcPr = factory.createTcPr();
-            CTShd shd = factory.createCTShd();
-            shd.setColor("auto");
-            shd.setFill("ADD8E6");  // Yellow color in hex
-            tcPr.setShd(shd);
-            cell.setTcPr(tcPr);
-        }
-        table.getContent().add(headerRow);
-
-        // Create table rows
-        for (Map<String, String> record : records) {
-            Tr row = factory.createTr();
-            for (String key : keys) {
-                Tc cell = factory.createTc();
-                setCellPropertiesAndValue(factory, record.get(key), cell, row);
-            }
-            table.getContent().add(row);
-        }
-
-        return table;
-    }
-
-    private static void setCellPropertiesAndValue(ObjectFactory factory, String columnNames, Tc cell, Tr row) {
-        // Create paragraph
-        P paragraph = factory.createP();
-
-        // Set paragraph alignment to center
-        PPr paragraphProperties = factory.createPPr();
-        Jc justification = factory.createJc();
-        justification.setVal(JcEnumeration.CENTER);
-        paragraphProperties.setJc(justification);
-        paragraph.setPPr(paragraphProperties);
-
-        // Create run and set text
-        R run = factory.createR();
-        Text text = factory.createText();
-        text.setValue(columnNames);
-        run.getContent().add(text);
-        paragraph.getContent().add(run);
-        cell.getContent().add(paragraph);
-        row.getContent().add(cell);
-
-        // Set the font properties
-        RPr runProperties = factory.createRPr();
-
-        // Set font to Times New Roman
-        RFonts rFonts = factory.createRFonts();
-        rFonts.setAscii("Times New Roman");
-        rFonts.setHAnsi("Times New Roman");
-        runProperties.setRFonts(rFonts);
-
-        // Set font size to 11
-        HpsMeasure size = factory.createHpsMeasure();
-        size.setVal(BigInteger.valueOf(22)); // 11 * 2 because the unit is half-points
-        runProperties.setSz(size);
-        runProperties.setSzCs(size);
-
-        // Apply the run properties to the run
-        run.setRPr(runProperties);
-    }
-
-    private String escapeXml(String input) {
-        if (input == null) {
-            return null;
-        }
-        StringBuilder escaped = new StringBuilder();
-        for (char c : input.toCharArray()) {
-            switch (c) {
-                case '&':
-                    escaped.append("&amp;");
-                    break;
-                case '<':
-                    escaped.append("&lt;");
-                    break;
-                case '>':
-                    escaped.append("&gt;");
-                    break;
-                case '"':
-                    escaped.append("&quot;");
-                    break;
-                case '\'':
-                    escaped.append("&apos;");
-                    break;
-                default:
-                    escaped.append(c);
-                    break;
-            }
-        }
-        return escaped.toString();
     }
 }
